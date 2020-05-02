@@ -95,10 +95,18 @@
         <b-row class="my-4">
           <b-col>
             <div v-if="quotationMin">
-              <b-alert show>Min. Kurs: {{ quotationMin }}€</b-alert>
+              <b-alert show variant="warning"
+                >Min. Kurs: {{ quotationMin }}€</b-alert
+              >
             </div>
             <div v-if="profit">
-              <b-alert show>Gewinn: {{ profit }}€</b-alert>
+              <b-alert
+                show
+                :variant="
+                  profit > 0 ? 'success' : profit === '0.00' ? 'info' : 'danger'
+                "
+                >Gewinn: {{ profit }}€</b-alert
+              >
             </div>
           </b-col>
         </b-row>
