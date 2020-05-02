@@ -1,6 +1,6 @@
 <template>
   <b-row class="my-4">
-    <b-col sm="6">
+    <b-col sm="6" class="pr-4">
       <!-- ===== BUY ====== -->
       <b-row>
         <b-col>
@@ -51,7 +51,7 @@
     </b-col>
 
     <!-- ===== SELL ===== -->
-    <b-col sm="6">
+    <b-col sm="6" class="pr-4">
       <div>
         <b-row>
           <b-col>
@@ -74,7 +74,7 @@
           </b-col>
         </b-row>
 
-        <!-- quotation -->
+        <!-- quotationSell -->
         <b-row class="my-4">
           <b-col sm="5">
             <label for="quotationSell">Kurs:</label>
@@ -91,7 +91,7 @@
           </b-col>
         </b-row>
 
-        <!-- quotatioSelln  -->
+        <!-- quotatioSell -->
         <b-row class="my-4">
           <b-col>
             <div v-if="quotationMin">
@@ -136,15 +136,19 @@ export default {
       if (!this.isNumber(this.quotation)) return;
       const total = this.quotation * this.quantity;
 
-      return _.round(total - total * 0.005, 2);
+      return _.round(total - total * 0.005, 2).toFixed(2);
     },
     quotationMin() {
       if (!this.isNumber(this.quotation)) return;
-      return _.round(this.quotation + this.quotation * 0.001, 2);
+
+      return _.round(this.priceCost / (this.quantityCost * 0.995), 2).toFixed(
+        2
+      );
     },
     profit() {
-      const n = this.quantityCost * this.quotationSell;
-      return _.round(n - n * 0.005, 2);
+      if (!this.isNumber(this.quotationSell)) return 0;
+      const p = this.quotationSell * this.quantityCost * 0.995 - this.priceCost;
+      return _.round(p, 2).toFixed(2);
     }
   },
   watch: {
@@ -153,6 +157,9 @@ export default {
     },
     quotation(v) {
       this.quotation = this.toNumber(v);
+    },
+    quotationSell(v) {
+      this.quotationSell = this.toNumber(v);
     }
   },
   methods: {
