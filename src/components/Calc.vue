@@ -41,11 +41,17 @@
 
       <!-- quantity cost -->
       <div v-if="quantityCost">
-        <b-alert show>
-          <div>Anzahl Bitcoins: {{ quantityCost }}</div>
+        <b-alert show variant="primary">
+          <div>
+            <span class="font-weight-bold">Anzahl Bitcoins:</span>
+            {{ quantityCost | precision(4) }}
+          </div>
         </b-alert>
-        <b-alert show v-if="priceCost">
-          <div>EK-Preis: {{ priceCost }}€</div>
+        <b-alert show variant="primary" v-if="priceCost">
+          <div>
+            <span class="font-weight-bold">Ausgaben:</span>
+            {{ priceCost | precision(2) }}€
+          </div>
         </b-alert>
       </div>
     </b-col>
@@ -91,21 +97,30 @@
           </b-col>
         </b-row>
 
-        <!-- quotatioSell -->
+        <!-- profit -->
         <b-row class="my-4">
           <b-col>
             <div v-if="quotationMin">
-              <b-alert show variant="warning"
-                >Min. Kurs: {{ quotationMin }}€</b-alert
+              <b-alert show variant="warning">
+                <span class="font-weight-bold">Min. Kurs:</span>
+                {{ quotationMin | precision(2) }}€</b-alert
               >
             </div>
-            <div v-if="profit">
+            <div v-if="priceSell">
+              <b-alert show variant="info">
+                <span class="font-weight-bold">Auszahlung:</span>
+                {{ priceSell | precision(2) }}€</b-alert
+              >
+            </div>
+            <div v-if="isNumber(profit)">
               <b-alert
                 show
                 :variant="
-                  profit > 0 ? 'success' : profit === '0.00' ? 'info' : 'danger'
+                  profit > 0 ? 'success' : profit === 0 ? 'info' : 'danger'
                 "
-                >Gewinn: {{ profit }}€</b-alert
+              >
+                <span class="font-weight-bold">Gewinn:</span>
+                {{ profit | precision(2) }}€</b-alert
               >
             </div>
           </b-col>
@@ -121,6 +136,12 @@ import _ from "lodash";
 export default {
   name: "Calc",
   props: {},
+  filters: {
+    precision(v, precision) {
+      if (!_.isFinite(v)) return "";
+      return v.toFixed(_.round(precision));
+    }
+  },
   data() {
     return {
       quantity: undefined,
@@ -132,31 +153,32 @@ export default {
     quantityCost: {
       get() {
         if (!this.isNumber(this.quantity)) return;
-        return _.round(this.quantity * 0.99, 4);
+        return this.quantity * 0.99;
       },
       set(v) {
         v = this.toNumber(v);
         if (!this.isNumber(v)) return;
-        this.quantity = _.round(v / 0.99, 4);
+        this.quantity = _.round(v / 0.99, 6);
       }
     },
     priceCost() {
       if (!this.isNumber(this.quotation)) return;
       const total = this.quotation * this.quantity;
 
-      return _.round(total - total * 0.005, 2).toFixed(2);
+      return this.toNumber(_.round(total - total * 0.005, 2));
+    },
+    priceSell() {
+      if (!this.isNumber(this.profit) || !this.isNumber(this.priceCost)) return;
+      return this.priceCost + this.profit;
+    },
+    profit() {
+      if (!this.isNumber(this.quotationSell)) return;
+      const p = this.quotationSell * this.quantityCost * 0.995 - this.priceCost;
+      return this.toNumber(_.round(p, 2));
     },
     quotationMin() {
       if (!this.isNumber(this.quotation)) return;
-
-      return _.round(this.priceCost / (this.quantityCost * 0.995), 2).toFixed(
-        2
-      );
-    },
-    profit() {
-      if (!this.isNumber(this.quotationSell)) return 0;
-      const p = this.quotationSell * this.quantityCost * 0.995 - this.priceCost;
-      return _.round(p, 2).toFixed(2);
+      return this.priceCost / (this.quantityCost * 0.995);
     }
   },
   watch: {
@@ -176,7 +198,7 @@ export default {
       return _.toNumber(_.replace(v, /,/g, "."));
     },
     isNumber(v) {
-      return !_.isNaN(v) && _.isNumber(v);
+      return _.isFinite(v);
     }
   }
 };
